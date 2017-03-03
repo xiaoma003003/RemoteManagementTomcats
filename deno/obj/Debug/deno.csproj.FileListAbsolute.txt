@@ -1,0 +1,14 @@
+E:\vb\deno\obj\Debug\deno.Properties.Resources.resources
+E:\vb\deno\obj\Debug\deno.csproj.GenerateResource.Cache
+E:\vb\deno\bin\Debug\MySql.Data.dll
+E:\vb\deno\obj\Debug\deno.TomcatList.resources
+E:\vb\deno\obj\Debug\deno.home.resources
+E:\vb\deno\bin\Debug\tomcatStart.exe.config
+E:\vb\deno\bin\Debug\tomcatStart.exe
+E:\vb\deno\bin\Debug\tomcatStart.pdb
+E:\vb\deno\obj\Debug\tomcatStart.exe
+E:\vb\deno\obj\Debug\tomcatStart.pdb
+E:\vb\deno\obj\Debug\deno.serverslist.resources
+E:\vb\deno\bin\Debug\tomcatStart.exe.CodeAnalysisLog.xml
+E:\vb\deno\bin\Debug\tomcatStart.exe.lastcodeanalysissucceeded
+E:\vb\deno\obj\Debug\deno.csprojResolveAssemblyReference.cache
