@@ -1,0 +1,7 @@
+E:\vb\socketServer\bin\Debug\socketServer.exe
+E:\vb\socketServer\bin\Debug\socketServer.pdb
+E:\vb\socketServer\obj\Debug\socketServer.Server.resources
+E:\vb\socketServer\obj\Debug\socketServer.Properties.Resources.resources
+E:\vb\socketServer\obj\Debug\socketServer.csproj.GenerateResource.Cache
+E:\vb\socketServer\obj\Debug\socketServer.exe
+E:\vb\socketServer\obj\Debug\socketServer.pdb

@@ -1,0 +1,53 @@
+///           Application.EnableVisualStyles();
+///           Application.SetCompatibleTextRenderingDefault(false);
+///           Application.Run(new Server());
+            int port = 19999;
+            string host = "192.168.0.8";
+            string sendStr = null;
+
+            ///创建终结点（EndPoint）
+            IPAddress ip = IPAddress.Parse(host);//把ip地址字符串转换为IPAddress类型的实例
+            IPEndPoint ipe = new IPEndPoint(ip, port);//用指定的端口和ip初始化IPEndPoint类的新实例
+
+            ///创建socket并开始监听
+            Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);//创建一个socket对像，如果用udp协议，则要用SocketType.Dgram类型的套接字
+            s.Bind(ipe);//绑定EndPoint对像（2000端口和ip地址）
+            s.Listen(0);//开始监听
+            Console.WriteLine("等待客户端连接");
+
+            ///接受到client连接，为此连接建立新的socket，并接受信息
+            while (true) {
+                Socket temp = s.Accept();//为新建连接创建新的socket
+                Console.WriteLine("建立连接");
+                string recvStr = "";
+                byte[] recvBytes = new byte[1024];
+                int bytes;
+                bytes = temp.Receive(recvBytes, recvBytes.Length, 0);//从客户端接受信息
+                recvStr += Encoding.ASCII.GetString(recvBytes, 0, bytes);
+                Console.WriteLine("server get message:{0} from client", recvStr);//把客户端传来的信息显示出来
+                Process p = new Process();//创建进程对象 
+                p.StartInfo.FileName = "cmd.exe";//设定需要执行的命令 
+                p.StartInfo.UseShellExecute = false;//不使用系统外壳程序启动 
+                p.StartInfo.RedirectStandardInput = true;//可以重定向输入  
+                p.StartInfo.RedirectStandardOutput = true;
+                p.StartInfo.RedirectStandardError = true;
+                p.StartInfo.CreateNoWindow = false;//不创建窗口 
+                p.Start();
+                //p.StandardInput.WriteLine(recvStr);
+                p.StandardInput.WriteLine("exit");
+               // p.WaitForExit();
+                //string sendStr = p.StandardOutput.ReadToEnd();
+                if (p != null)
+                {
+                    p.Close();
+                }
+                ///给client端返回信息
+                ///
+                if(sendStr==null) { 
+                    sendStr = "ok!";
+                }
+                byte[] bs = Encoding.ASCII.GetBytes(sendStr);
+                temp.Send(bs, bs.Length, 0);//返回信息给客户端
+                temp.Close();
+                ///s.Close();
+            }

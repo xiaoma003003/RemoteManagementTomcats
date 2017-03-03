@@ -1,0 +1,8 @@
+E:\vb\socketClient\obj\Debug\socketClient.csprojResolveAssemblyReference.cache
+E:\vb\socketClient\obj\Debug\socketClient.socketClient.resources
+E:\vb\socketClient\obj\Debug\socketClient.Properties.Resources.resources
+E:\vb\socketClient\obj\Debug\socketClient.csproj.GenerateResource.Cache
+E:\vb\socketClient\bin\Debug\socketClient.exe
+E:\vb\socketClient\bin\Debug\socketClient.pdb
+E:\vb\socketClient\obj\Debug\socketClient.exe
+E:\vb\socketClient\obj\Debug\socketClient.pdb
