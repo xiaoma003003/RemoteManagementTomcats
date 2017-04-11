@@ -24,6 +24,8 @@ namespace deno
         string host = null;
         LogHelper log = new LogHelper();
         SynchronizationContext syn = null;
+        BackgroundWorker Bw = new BackgroundWorker();
+        public int serverId=0;//服务器编号
         public TomcatList()
         {
             InitializeComponent();
@@ -61,41 +63,87 @@ namespace deno
             listView1.Columns.Add("编号", 100, HorizontalAlignment.Left);
             listView1.Columns.Add("名称", 150, HorizontalAlignment.Left);
             listView1.Columns.Add("路径", 230, HorizontalAlignment.Left);
-            listView1.Columns.Add("状态", 100, HorizontalAlignment.Left);  
-            //获取tomcat列表线程    
-            Thread myLoadThread = new Thread(this.loadTomcatThread);
-            myLoadThread.Start();
+            listView1.Columns.Add("状态", 100, HorizontalAlignment.Left);
+            //获取tomcat列表
+            loadTomcats();
+        }
+        //获取tomcat列表
+        private void loadTomcats() {
+            DataTable dt;
+            if (serverId > 0)
+            {
+                //查询服务器信息
+                dt = db.ExecuteQuery("SELECT id,ipaddress,port,name,operatingsystem FROM serverslist WHERE id=" + serverId, CommandType.Text);
+                label2.Text = dt.Rows[0]["name"].ToString() + "-" + dt.Rows[0]["ipaddress"].ToString();
+                dt = db.ExecuteQuery("SELECT COUNT(id) AS tNum FROM tomcatlist WHERE serverid="+ serverId, CommandType.Text);
+            }
+            else {
+                label2.Text = "全部";
+                dt = db.ExecuteQuery("SELECT COUNT(id) AS tNum FROM tomcatlist", CommandType.Text);
+            }
+            
+            //设置进度条的最大值
+            progressBar1.Maximum = int.Parse(dt.Rows[0]["tNum"].ToString());
+            Bw.WorkerSupportsCancellation = true;
+            Bw.WorkerReportsProgress = true;
+            Bw.DoWork += new DoWorkEventHandler(Add);//绑定事件
+            Bw.ProgressChanged += new ProgressChangedEventHandler(Progress);
+            Bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(End);
+            Bw.RunWorkerAsync();
+        }
+        //加载tomcat列表
+        public void Add(object sender, DoWorkEventArgs e)
+        {
+            DataTable dt;
+            if (serverId > 0)
+            {
+                dt = db.ExecuteQuery("SELECT id,lujing,lujingstop,tomcatname,serverid FROM tomcatlist WHERE serverid=" + serverId, CommandType.Text);
+            }
+            else
+            {
+                dt = db.ExecuteQuery("SELECT id,lujing,lujingstop,tomcatname,serverid FROM tomcatlist", CommandType.Text);
+            }
+            
+            int num = 1;
+            foreach (DataRow dr2 in dt.Rows)
+            {
+                //添加行  
+                var item = new ListViewItem();
+                item.ImageIndex = num;
+                item.Text = dr2["id"].ToString();
+                item.SubItems.Add(dr2["tomcatname"].ToString());
+                item.SubItems.Add(dr2["lujing"].ToString());
+                item.SubItems.Add("更新中");
+                num += 1;
+                Bw.ReportProgress(listView1.Items.Count, item);
+                System.Threading.Thread.Sleep(200);
+            }
+
+        }
+        //加载tomcat列表进度条(此处降数据添加到ListView控件)
+        public void Progress(object sender, ProgressChangedEventArgs e)
+        {
+            progressBar1.Value = e.ProgressPercentage;//获取第几个文件，用来改变进度条的进度
+            ListViewItem lv = e.UserState as ListViewItem;
+            listView1.Items.Add(lv);//把最新获取到的文件信息添加到listview
             //更新tomcat状态线程
             Thread myUpdataTomcatStatesThread = new Thread(this.updataTomcatStatesThread);
-            myUpdataTomcatStatesThread.Start();
+            myUpdataTomcatStatesThread.Start(lv.Index.ToString());//参数为第几行
         }
-        //加载tomcat线程
-        private void loadTomcatThread() {
-            syn.Post(new SendOrPostCallback((o) => {
-                DataTable dt;
-                dt = db.ExecuteQuery("SELECT id,lujing,lujingstop,tomcatname,serverid FROM tomcatlist", CommandType.Text);
-                int num = 1;
-                foreach (DataRow dr2 in dt.Rows)
-                {
-                    //添加行  
-                    var item = new ListViewItem();
-                    item.ImageIndex = num;
-                    item.Text = dr2["id"].ToString();
-                    item.SubItems.Add(dr2["tomcatname"].ToString());
-                    item.SubItems.Add(dr2["lujing"].ToString());
-                    item.SubItems.Add("更新中");
-                    listView1.BeginUpdate();
-                    listView1.Items.Add(item);
-                    listView1.Items[listView1.Items.Count - 1].EnsureVisible();
-                    listView1.EndUpdate();
-                    num += 1;
-                }
-            }), null);
-        }
-        //更新tomcat状态线程
-        private void updataTomcatStatesThread()
+        //数据加载结束
+        public void End(object sender, AsyncCompletedEventArgs e)
         {
-            syn.Post(new SendOrPostCallback((o) => { updateAllStates(); }), null);
+            progressBar1.Value = 0;//进度条清0
+        }
+
+        //更新tomcat状态线程
+        private void updataTomcatStatesThread(object obj)
+        {
+            syn.Post(new SendOrPostCallback((o) => {
+                string str = obj.ToString();
+                string status= updateTomcatsByListViewIndex(int.Parse(str));
+                this.listView1.Items[int.Parse(str)].SubItems[3].Text= status;
+            }), null);
         }
         private void button1_Click(object sender, EventArgs e)
         {
@@ -238,14 +286,21 @@ namespace deno
                 }
             }
         }
+        //更新状态按钮更新tomcat状态
         private void 刷新状态ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (listView1.SelectedItems != null)
             {
-                int id = int.Parse(this.listView1.SelectedItems[0].SubItems[0].Text);
-                string status = checkTomcatStatus(id);
-                this.listView1.SelectedItems[0].SubItems[3].Text = status;
+                this.listView1.SelectedItems[0].SubItems[3].Text = "更新中";
+                //更新tomcat状态线程
+                Thread myUpdataTomcatStatesThread = new Thread(this.updataTomcatStatesThread);
+                myUpdataTomcatStatesThread.Start(this.listView1.SelectedItems[0].Index);//参数为第几行
             }
+        }
+        //根据listView下表更新tomcat状态，参数为第几行
+        private string  updateTomcatsByListViewIndex(int indexId) {
+            int id = int.Parse(this.listView1.Items[indexId].SubItems[0].Text);
+            return checkTomcatStatus(id);
         }
         private string checkTomcatStatus(int id)
         {
@@ -315,12 +370,6 @@ namespace deno
             }
             return "开启";
         }
-    
-        //点击更新按钮更新状态
-        private void button2_Click(object sender, EventArgs e)
-        {
-            updateAllStates();
-        }
         private void updateAllStates()
         {
             int count = listView1.Items.Count;
@@ -332,6 +381,15 @@ namespace deno
                 System.Threading.Thread.Sleep(1000);
             }
         }
-       
+
+        private void progressBar1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

@@ -15,6 +15,7 @@ namespace deno
         DBHelper db = null;
         LogHelper log = new LogHelper();
         SCHelper sc = null;
+        BackgroundWorker Bw = new BackgroundWorker();
         public serverslist()
         {
             InitializeComponent();
@@ -40,6 +41,27 @@ namespace deno
             listView1.Columns.Add("系统", 100, HorizontalAlignment.Left);
             listView1.Columns.Add("地址", 100, HorizontalAlignment.Left);
             listView1.Columns.Add("端口", 100, HorizontalAlignment.Left);
+            loadServers();
+        }
+        //获取服务器列表
+        private void loadServers()
+        {
+            listView1.Items.Clear();
+            DataTable dt;
+            dt = db.ExecuteQuery("SELECT COUNT(id) AS tNum FROM serverslist", CommandType.Text);
+            //设置进度条的最大值
+            progressBar1.Maximum = int.Parse(dt.Rows[0]["tNum"].ToString());
+            Bw.WorkerSupportsCancellation = true;
+            Bw.WorkerReportsProgress = true;
+            Bw.DoWork += new DoWorkEventHandler(Add);//绑定事件
+            Bw.ProgressChanged += new ProgressChangedEventHandler(Progress);
+            Bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(End);
+            Bw.RunWorkerAsync();
+           
+        }
+        //加载服务器列表
+        public void Add(object sender, DoWorkEventArgs e)
+        {
             DataTable dt;
             dt = db.ExecuteQuery("SELECT id,ipaddress,port,name,operatingsystem FROM serverslist", CommandType.Text);
             int num = 1;
@@ -53,12 +75,22 @@ namespace deno
                 item.SubItems.Add(dr2["operatingsystem"].ToString());
                 item.SubItems.Add(dr2["ipaddress"].ToString());
                 item.SubItems.Add(dr2["port"].ToString());
-                listView1.BeginUpdate();
-                listView1.Items.Add(item);
-                listView1.Items[listView1.Items.Count - 1].EnsureVisible();
-                listView1.EndUpdate();
+                Bw.ReportProgress(listView1.Items.Count, item);
                 num += 1;
             }
+
+        }
+        //加载服务器列表进度条(此处降数据添加到ListView控件)
+        public void Progress(object sender, ProgressChangedEventArgs e)
+        {
+            progressBar1.Value = e.ProgressPercentage;//获取第几个文件，用来改变进度条的进度
+            ListViewItem lv = e.UserState as ListViewItem;
+            listView1.Items.Add(lv);//把最新获取到的文件信息添加到listview
+        }
+        //数据加载结束
+        public void End(object sender, AsyncCompletedEventArgs e)
+        {
+            progressBar1.Value = 0;//进度条清0
         }
         //重启
         private void restartServer(object sender, EventArgs e)
@@ -146,6 +178,20 @@ namespace deno
         private void serverslist_Load(object sender, EventArgs e)
         {
 
+        }
+        //添加服务器
+        private void button2_Click(object sender, EventArgs e)
+        {
+
+        }
+        //管理该服务器上的tomcat
+        private void mangeTomcat(object sender, EventArgs e)
+        {
+            int id = int.Parse(this.listView1.SelectedItems[0].SubItems[0].Text);
+            TomcatList tomcatList = new TomcatList();
+            tomcatList.serverId = id;
+            tomcatList.Show();
+            tomcatList.Owner = this;
         }
     }
 }

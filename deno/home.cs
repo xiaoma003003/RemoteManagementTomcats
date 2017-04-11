@@ -31,18 +31,18 @@ namespace deno
         }
         private void Form1_Load(object sender, EventArgs e)
         {
-            conf = System.AppDomain.CurrentDomain.SetupInformation.ApplicationBase.Replace("bin\\", "").Replace("Debug\\", "") + "conf\\deno.conf";
-            fh = new FileHelper();
-            List<string> strList = fh.getListFromFile(conf);
-            foreach (string str in strList){
-                if (str.IndexOf("port") >=0) {
-                    this.txtboxPort.Text = str.Replace("port:","");
-                }
-                if (str.IndexOf("host") >= 0)
-                {
-                    this.txtboxIP.Text = str.Replace("host:", "");
-                }
-            }
+            //conf = System.AppDomain.CurrentDomain.SetupInformation.ApplicationBase.Replace("bin\\", "").Replace("Debug\\", "") + "conf\\deno.conf";
+            //fh = new FileHelper();
+           // List<string> strList = fh.getListFromFile(conf);
+            //foreach (string str in strList){
+                //if (str.IndexOf("port") >=0) {
+                 //   this.txtboxPort.Text = str.Replace("port:","");
+               // }
+               // if (str.IndexOf("host") >= 0)
+               // {
+               //     this.txtboxIP.Text = str.Replace("host:", "");
+               // }
+           // }
         }
         //开启tomcat
         private void button1_Click(object sender, EventArgs e)
